@@ -38,13 +38,6 @@ class Tacotron2(nn.Module):
         return (text_padded, input_lengths, mel_padded, max_len, output_lengths), (mel_padded, gate_padded)
 
     def parse_output(self, outputs, output_lengths=None):
-        # print('mel_outputs: ', outputs[0].shape)
-        # print('mel_outputs: ', outputs[0])
-        # print('mel_outputs_postnet: ', outputs[1])
-        # print('gate_outputs: ', outputs[2])
-        # print('alignments: ', outputs[3])
-        # print('output_lengths', output_lengths)
-
         if self.mask_padding and output_lengths is not None:
             mask = ~get_mask_from_lengths(output_lengths)
             mask = mask.expand(self.n_mel_channels, mask.size(0), mask.size(1))
@@ -56,15 +49,11 @@ class Tacotron2(nn.Module):
 
     def forward(self, inputs):
         text_inputs, text_lengths, mels, max_len, output_lengths = inputs
-        # print('text_inputs : ', text_inputs)
-        # print('text_inputs1: ', text_inputs.numpy()[0])
-        # print(''.join([id2symbols[id] for id in text_inputs.numpy()[0]]))
         text_lengths, output_lengths = text_lengths.data, output_lengths.data
-        embedding_inputs = self.embedding(text_inputs).transpose(1, 2)
-        # print('embedding_inputs: ', embedding_inputs.shape)
-        encoder_outputs = self.encoder(embedding_inputs, text_lengths)
-        # print('encoder_outputs: ', encoder_outputs)
         
+        embedding_inputs = self.embedding(text_inputs).transpose(1, 2)
+        encoder_outputs = self.encoder(embedding_inputs, text_lengths)
+
         mel_outputs, gate_outputs, alignments = self.decoder(
             encoder_outputs, mels, memory_lengths=text_lengths)
         

@@ -52,9 +52,9 @@ def prepare_dataloaders(hparams):
         train_sampler = None
         shuffle = True
 
-    train_loader = DataLoader(trainset, num_workers=1, shuffle=shuffle,
+    train_loader = DataLoader(trainset, num_workers=4, shuffle=shuffle,
                               sampler=train_sampler,
-                              batch_size=hparams.batch_size, pin_memory=False,
+                              batch_size=hparams.batch_size, pin_memory=True,
                               drop_last=True, collate_fn=collate_fn)
     return train_loader, valset, collate_fn
 
@@ -127,7 +127,7 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus,
         val_sampler = DistributedSampler(valset) if distributed_run else None
         val_loader = DataLoader(valset, sampler=val_sampler, num_workers=1,
                                 shuffle=False, batch_size=batch_size,
-                                pin_memory=False, collate_fn=collate_fn)
+                                pin_memory=True, collate_fn=collate_fn)
 
         val_loss = 0.0
         for i, batch in enumerate(val_loader):
@@ -261,7 +261,7 @@ if __name__ == '__main__':
                         help='directory to save checkpoints')
     parser.add_argument('-l', '--log_directory', type=str, default='/home/fengchengli/fcl/tacotron2/logs',
                         help='directory to save tensorboard logs')
-    parser.add_argument('-c', '--checkpoint_path', type=str, default=None,
+    parser.add_argument('-c', '--checkpoint_path', type=str, default='/home/fengchengli/fcl/tacotron2/checkpoint/checkpoint_1999',
                         required=False, help='checkpoint path')
     parser.add_argument('--warm_start', action='store_true', default=True,
                         help='load model weights only, ignore specified layers')

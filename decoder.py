@@ -72,12 +72,8 @@ class Attention(nn.Module):
         attention_weights_cat: previous and cummulative attention weights
         mask: binary mask for padded data
         """
-        # print('attention_hidden_state : ', attention_hidden_state)
-        # print('processed_memory : ', processed_memory)
-        # print('attention_weights_cat : ', attention_weights_cat)
         alignment = self.get_alignment_energies(
             attention_hidden_state, processed_memory, attention_weights_cat)
-        # print('align: ', alignment)
         if mask is not None:
             alignment.data.masked_fill_(mask, self.score_mask_value)
         attention_weights = F.softmax(alignment, dim=1)
@@ -154,20 +150,25 @@ class Decoder(nn.Module):
         B = memory.size(0)
         MAX_TIME = memory.size(1)
 
+        # [B, rnn_dim]
         self.attention_hidden = Variable(memory.data.new(
             B, self.attention_rnn_dim).zero_())
         self.attention_cell = Variable(memory.data.new(
             B, self.attention_rnn_dim).zero_())
 
+        # [B, rnn_dim]
         self.decoder_hidden = Variable(memory.data.new(
             B, self.decoder_rnn_dim).zero_())
         self.decoder_cell = Variable(memory.data.new(
             B, self.decoder_rnn_dim).zero_())
 
+        # [B, T]
         self.attention_weights = Variable(memory.data.new(
             B, MAX_TIME).zero_())
+        # [B, T]
         self.attention_weights_cum = Variable(memory.data.new(
             B, MAX_TIME).zero_())
+        # [B, Dim]
         self.attention_context = Variable(memory.data.new(
             B, self.encoder_embedding_dim).zero_())
 
@@ -235,13 +236,11 @@ class Decoder(nn.Module):
         gate_output: gate output energies
         attention_weights:
         """
+        # decoder_input.shape=[B, Dim]
         cell_input = torch.cat((decoder_input, self.attention_context), -1)
-
-        # print('cell : ', cell_input)
 
         self.attention_hidden, self.attention_cell = self.attention_rnn(
             cell_input, (self.attention_hidden, self.attention_cell))
-        # print('self.attention_hidden: ', self.attention_hidden)
         self.attention_hidden = F.dropout(
             self.attention_hidden, self.p_attention_dropout, self.training)
 
@@ -252,7 +251,6 @@ class Decoder(nn.Module):
             self.attention_hidden, self.memory, self.processed_memory,
             attention_weights_cat, self.mask)
 
-        # print('self.attention_context: ', self.attention_context)
         self.attention_weights_cum += self.attention_weights
 
         decoder_input = torch.cat(
@@ -261,13 +259,12 @@ class Decoder(nn.Module):
             decoder_input, (self.decoder_hidden, self.decoder_cell))
         self.decoder_hidden = F.dropout(
             self.decoder_hidden, self.p_decoder_dropout, self.training)
-        # print('self.decoder_hidden: ', self.decoder_hidden)
 
         decoder_hidden_attention_context = torch.cat(
             (self.decoder_hidden, self.attention_context), dim=1)
         decoder_output = self.linear_projection(
             decoder_hidden_attention_context)
-        # print('decoder_output : ', decoder_output)
+
         gate_prediction = self.gate_layer(decoder_hidden_attention_context)
         return decoder_output, gate_prediction, self.attention_weights
 
@@ -286,7 +283,9 @@ class Decoder(nn.Module):
         alignments: sequence of attention weights from the decoder
         """
         decoder_input = self.get_go_frame(memory).unsqueeze(0)
+        # decoder_input/shape = (1, B, n_mel_channels)
         decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
+        # decoder_inputs/shape = (T_out, B, n_mel_channels)
         decoder_inputs = torch.cat((decoder_input, decoder_inputs), dim=0)
         decoder_inputs = self.prenet(decoder_inputs)
 
