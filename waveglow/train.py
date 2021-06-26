@@ -63,14 +63,15 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
           sigma, iters_per_checkpoint, batch_size, seed, fp16_run,
           checkpoint_path, with_tensorboard):
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
+    # torch.cuda.manual_seed(seed)
     #=====START: ADDED FOR DISTRIBUTED======
     if num_gpus > 1:
         init_distributed(rank, num_gpus, group_name, **dist_config)
     #=====END:   ADDED FOR DISTRIBUTED======
 
     criterion = WaveGlowLoss(sigma)
-    model = WaveGlow(**waveglow_config).cuda()
+    # model = WaveGlow(**waveglow_config).cuda()
+    model = WaveGlow(**waveglow_config)
 
     #=====START: ADDED FOR DISTRIBUTED======
     if num_gpus > 1:

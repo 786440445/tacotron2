@@ -13,10 +13,12 @@ from hparams import create_hparams
 
 home_dir = os.getcwd()
 
+# graph to pinyin and how to transfer pinyin to phoneme
 def g2p_transfer(line):
     return ' '.join(g2pmodel(line, tone=True, char_split=False))
 
 
+# format translate
 def do_single_file_trans(input_file, save_file, sample_rate=16000, target_extension="wav"):
     #if original_extension in ["wav", "mp3"] and target_extension in ["wav", "mp3"]:
     #    sox_cmd = "sox %s -r %s -c 1 %s" % (input_file, sample_rate, save_file)
@@ -90,12 +92,16 @@ def get_split_corpus(type, wavids, texts):
 
 
 def clean_data():
-    for wavfile in tqdm(os.listdir(origin_data_dir)):
-        if wavfile[-4:] == '.mp3':
-            file_path = os.path.join(origin_data_dir, wavfile)
-            save_file = os.path.join(data_dir, wavfile.replace('mp3', 'wav'))
-            do_single_file_trans(file_path, save_file, sample_rate=sample_rate, target_extension="wav")
-    
+    # pool = multiprocessing.Pool(16)
+    # for wavfile in tqdm(os.listdir(origin_data_dir)):
+    #     if wavfile[-4:] == '.mp3':
+    #         file_path = os.path.join(origin_data_dir, wavfile)
+    #         save_file = os.path.join(data_dir, wavfile.replace('mp3', 'wav'))
+    #         pool.apply_async(do_single_file_trans, (file_path, save_file, sample_rate, "wav"))
+    #         # do_single_file_trans(file_path, save_file, sample_rate=sample_rate, target_extension="wav")
+    # pool.close()
+    # pool.join()
+
     text_pd = pd.read_csv(origin_text_dir, header=None, sep='\t')
     wavids = text_pd.iloc[:, 0].values
     texts = text_pd.iloc[:, 1].values
@@ -137,5 +143,5 @@ if __name__ == '__main__':
     if not os.path.exists(data_dir):
         os.makedirs(data_dir, exist_ok=True)
     
-    # clean_data()
-    build_pinyin_vocab()
+    clean_data()
+    # build_pinyin_vocab()
